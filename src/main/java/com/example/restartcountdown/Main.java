@@ -128,9 +128,24 @@ public final class Main extends JavaPlugin implements CommandExecutor, TabComple
     }
 
     boolean isRestartConfigured() {
-        String script = restartScript();
-        if (script.isBlank()) return false;
-        return new File(script).isFile();
+        String command = restartScript();
+        if (command.isBlank()) return false;
+        String fileToken = firstCommandToken(command);
+        return !fileToken.isBlank() && new File(fileToken).isFile();
+    }
+
+    private String firstCommandToken(String command) {
+        if (command == null) return "";
+        String trimmed = command.trim();
+        if (trimmed.isEmpty()) return "";
+        char first = trimmed.charAt(0);
+        if (first == '"' || first == '\'') {
+            int closing = trimmed.indexOf(first, 1);
+            return closing > 1 ? trimmed.substring(1, closing) : "";
+        }
+        int end = 0;
+        while (end < trimmed.length() && !Character.isWhitespace(trimmed.charAt(end))) end++;
+        return trimmed.substring(0, end);
     }
 
     private void migrateConfig() {
