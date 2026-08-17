@@ -1,0 +1,25 @@
+# RestartCountdown 1.4.0
+entry-lock:
+  until-epoch-millis: 0
+  reason: "サーバーメンテナンスのため"
+player-entry-locks: {}
+movement-locks: {}
+restart-access:
+  active: false
+  reason: "サーバー再起動後のメンテナンス中です"
+  enable-on-restart: true
+  allowed-players: {}
+scheduled-countdown:
+  enabled: true
+  timezone: "Asia/Tokyo"
+  hour: 2
+  minute: 45
+  countdown-seconds: 900
+  reason: "定期再起動のため"
+  action: "RESTART"
+  post-action-minutes: 0
+  teleport:
+    world: "world"
+    x: 0.0
+    y: 100.0
+    z: 0.0
