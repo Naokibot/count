@@ -130,18 +130,26 @@ public final class Main extends JavaPlugin implements CommandExecutor, TabComple
     boolean isRestartConfigured() {
         String script = restartScript();
         if (script.isBlank()) return false;
-        File file = new File(script);
-        if (!file.isAbsolute()) file = new File(getServer().getWorldContainer(), script);
-        return file.isFile();
+        return new File(script).isFile();
     }
 
     private void migrateConfig() {
         int version = getConfig().getInt("config-version", 1);
         if (version >= 2) return;
         String action = getConfig().getString("scheduled-countdown.action", "KICK");
-        if ("KICK".equalsIgnoreCase(action)) {
+        boolean legacyDefaultSchedule = "KICK".equalsIgnoreCase(action)
+                && getConfig().getBoolean("scheduled-countdown.enabled", true)
+                && "Asia/Tokyo".equals(getConfig().getString("scheduled-countdown.timezone", "Asia/Tokyo"))
+                && getConfig().getInt("scheduled-countdown.hour", 2) == 2
+                && getConfig().getInt("scheduled-countdown.minute", 45) == 45
+                && getConfig().getInt("scheduled-countdown.countdown-seconds", 900) == 900
+                && getConfig().getLong("scheduled-countdown.post-action-minutes", 0L) == 0L
+                && "定期再起動のため".equals(getConfig().getString("scheduled-countdown.reason", "定期再起動のため"));
+        if (legacyDefaultSchedule) {
             getConfig().set("scheduled-countdown.action", "RESTART");
-            getLogger().info("Migrated scheduled-countdown.action from legacy KICK default to RESTART.");
+            getLogger().info("Migrated the untouched 1.3.0 scheduled countdown default from KICK to RESTART.");
+        } else if ("KICK".equalsIgnoreCase(action)) {
+            getLogger().info("Preserved customized scheduled-countdown.action=KICK during 1.4.0 migration.");
         }
         if (!getConfig().contains("restart-access.active")) getConfig().set("restart-access.active", false);
         if (!getConfig().contains("restart-access.reason")) getConfig().set("restart-access.reason", "サーバー再起動後のメンテナンス中です");
