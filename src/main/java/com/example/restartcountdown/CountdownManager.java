@@ -114,6 +114,11 @@ final class CountdownManager implements Listener {
     }
 
     private void finishRestartAction() {
+        if (!plugin.isRestartConfigured()) {
+            Bukkit.broadcastMessage("§c再起動を中止しました。Spigotのrestart-scriptが見つかりません。");
+            plugin.getLogger().severe("Restart aborted: configured restart-script is missing: " + plugin.restartScript());
+            return;
+        }
         if (plugin.getConfig().getBoolean("restart-access.enable-on-restart", true)) restartAccessManager.activate(reason);
         Bukkit.savePlayers();
         for (var world : Bukkit.getWorlds()) world.save();
