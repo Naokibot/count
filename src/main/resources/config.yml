@@ -1,3 +1,5 @@
+config-version: 2
+
 # RestartCountdown 1.4.0
 entry-lock:
   until-epoch-millis: 0
