@@ -46,6 +46,10 @@ final class DailyScheduleManager {
             plugin.getLogger().warning("Scheduled countdown skipped because another countdown is running.");
             return;
         }
+        if (settings.action() == CountdownManager.EndAction.RESTART && !plugin.isRestartConfigured()) {
+            plugin.getLogger().severe("Scheduled restart skipped: restart-script is not configured or does not exist: " + plugin.restartScript());
+            return;
+        }
         Location destination = settings.action() == CountdownManager.EndAction.TELEPORT ? readTeleportDestination() : null;
         if (settings.action() == CountdownManager.EndAction.TELEPORT && destination == null) return;
         countdownManager.startCountdown(settings.countdownSeconds(), settings.postActionMinutes(), settings.reason(),
