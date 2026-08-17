@@ -32,6 +32,7 @@ public final class Main extends JavaPlugin implements CommandExecutor, TabComple
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        migrateConfig();
         restartAccessManager = new RestartAccessManager(this);
         entryLockManager = new EntryLockManager(this);
         movementLockManager = new MovementLockManager(this);
@@ -102,24 +103,51 @@ public final class Main extends JavaPlugin implements CommandExecutor, TabComple
         Integer seconds = positiveInt(sender, args[1], "秒");
         String reason = join(args, 2);
         if (seconds == null || !validReason(sender, reason)) return;
+        if (!isRestartConfigured()) {
+            sender.sendMessage("§cSpigotのrestart-scriptが見つからないため、再起動を開始しません。");
+            sender.sendMessage("§e/rcd restartstatus で設定を確認してください。");
+            return;
+        }
         countdownManager.startCountdown(seconds, 0L, reason, CountdownManager.EndAction.RESTART, null, null);
         sender.sendMessage("§a実再起動カウントダウンを開始しました。終了時にSpigot restart()を呼び出します。");
     }
 
     private void restartStatus(CommandSender sender) {
-        String script = Bukkit.spigot().getConfig().getString("settings.restart-script", "");
-        boolean configured = script != null && !script.isBlank();
-        boolean exists = false;
-        if (configured) {
-            File f = new File(script);
-            if (!f.isAbsolute()) f = new File(getServer().getWorldContainer(), script);
-            exists = f.isFile();
-        }
+        String script = restartScript();
+        boolean ready = isRestartConfigured();
         sender.sendMessage("§6[RestartCountdown] 再起動状態");
-        sender.sendMessage("§7restart-script: §f" + (configured ? script : "未設定"));
-        sender.sendMessage("§7スクリプトファイル確認: " + (exists ? "§aOK" : "§e未確認/見つかりません"));
+        sender.sendMessage("§7restart-script: §f" + (script.isBlank() ? "未設定" : script));
+        sender.sendMessage("§7スクリプトファイル確認: " + (ready ? "§aOK" : "§c見つかりません"));
         sender.sendMessage("§7再起動後アクセス制限: " + (restartAccessManager.isActive() ? "§cON" : "§aOFF"));
-        if (!configured || !exists) sender.sendMessage("§eSpigotはrestart-script未設定時、再起動ではなく停止する場合があります。");
+        if (!ready) sender.sendMessage("§e安全のためRESTART処理は開始されません。spigot.ymlを設定してください。");
+    }
+
+    String restartScript() {
+        String script = Bukkit.spigot().getConfig().getString("settings.restart-script", "");
+        return script == null ? "" : script.trim();
+    }
+
+    boolean isRestartConfigured() {
+        String script = restartScript();
+        if (script.isBlank()) return false;
+        File file = new File(script);
+        if (!file.isAbsolute()) file = new File(getServer().getWorldContainer(), script);
+        return file.isFile();
+    }
+
+    private void migrateConfig() {
+        int version = getConfig().getInt("config-version", 1);
+        if (version >= 2) return;
+        String action = getConfig().getString("scheduled-countdown.action", "KICK");
+        if ("KICK".equalsIgnoreCase(action)) {
+            getConfig().set("scheduled-countdown.action", "RESTART");
+            getLogger().info("Migrated scheduled-countdown.action from legacy KICK default to RESTART.");
+        }
+        if (!getConfig().contains("restart-access.active")) getConfig().set("restart-access.active", false);
+        if (!getConfig().contains("restart-access.reason")) getConfig().set("restart-access.reason", "サーバー再起動後のメンテナンス中です");
+        if (!getConfig().contains("restart-access.enable-on-restart")) getConfig().set("restart-access.enable-on-restart", true);
+        getConfig().set("config-version", 2);
+        saveConfig();
     }
 
     private void allow(CommandSender sender, String[] args) {
