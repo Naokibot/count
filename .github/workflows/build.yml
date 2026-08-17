@@ -1,0 +1,31 @@
+name: Build
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Build against Spigot 1.21.1 API
+        run: mvn -B clean package
+      - name: Verify release jar
+        run: |
+          JAR=target/RestartCountdown-1.4.0-Spigot-1.21.1.jar
+          test -f "$JAR"
+          unzip -t "$JAR"
+          unzip -l "$JAR" | grep 'plugin.yml'
+          unzip -l "$JAR" | grep 'config.yml'
+          unzip -l "$JAR" | grep 'RestartAccessManager.class'
+          javap -verbose -classpath "$JAR" com.example.restartcountdown.Main | grep 'major version: 65'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RestartCountdown-1.4.0-Spigot-1.21.1
+          path: target/RestartCountdown-1.4.0-Spigot-1.21.1.jar
