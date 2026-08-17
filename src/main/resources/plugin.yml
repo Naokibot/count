@@ -1,0 +1,19 @@
+name: RestartCountdown
+version: 1.4.0
+main: com.example.restartcountdown.Main
+api-version: '1.21.1'
+author: RestartCountdown contributors
+description: BossBar countdown, real Spigot restart, persistent post-restart access control, entry locks and movement locks.
+commands:
+  restartcountdown:
+    description: Manage restart countdowns, access gates and maintenance locks.
+    usage: /restartcountdown help
+    aliases: [rcd]
+    permission: restartcountdown.use
+permissions:
+  restartcountdown.use:
+    description: Allows RestartCountdown administration.
+    default: op
+  restartcountdown.access.bypass:
+    description: Allows joining while the post-restart access gate is active.
+    default: op
